@@ -1,0 +1,20 @@
+{
+  "name": "lil-lol",
+  "version": "1.0.0",
+  "description": "Some random stuff with League of Legends api",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Bryan Bialokur da Cruz",
+  "license": "ISC",
+  "dependencies": {
+    "group-by": "0.0.1",
+    "request": "^2.88.0",
+    "superagent": "^5.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.1.0"
+  }
+}
