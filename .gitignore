@@ -1,5 +1,6 @@
 *.json
 *.txt
+*.csv
 node_modules
 !package.json
 !champs.json
