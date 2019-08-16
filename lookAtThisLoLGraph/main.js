@@ -1,10 +1,26 @@
 const superagent = require("superagent");
 const fs = require("fs");
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
   const baseUrl = "https://br1.api.riotgames.com/lol/match/v4";
 
-  const relationships = [];
+  const whiteList = [
+    "Y SOY REBELDE",
+    "CARIIN VOLTA PF",
+    "DIHADES",
+    "EVANILLYN",
+    "Bellini",
+    "MENGOGIRL",
+    "FASTFANG",
+    "UNICÓRNIO ROSA",
+    "UMA BUFA",
+    "Nome de Jogador",
+    "vrax"
+  ];
 
   let matchesIds = [];
   let matchesIdsIndex = 0;
@@ -12,6 +28,7 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
   let accountIds = [initialAccountId];
   let accountIdsIndex = 0;
 
+  let countRequests = 1;
   while (
     matchesIds.length < maxMatches &&
     accountIdsIndex < accountIds.length
@@ -19,12 +36,26 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
     let currAccountId = accountIds[accountIdsIndex];
     accountIdsIndex += 1;
 
+    console.log(countRequests);
+    if (!countRequests % 50) {
+      console.log("waiting");
+      await sleep(10000);
+      console.log("stop waiting");
+    }
+
     const tmpMatchesIds = await superagent
       .get(
         `${baseUrl}/matchlists/by-account/${currAccountId}?beginIndex=0&endIndex=${matchesByPlayer}&api_key=${apiKey}`
       )
       .then(r => r.body.matches.map(m => m.gameId))
       .catch(console.error);
+
+    if (!tmpMatchesIds) {
+      console.log("aaa");
+      continue;
+    }
+
+    countRequests += 1;
 
     matchesIds = matchesIds.concat(
       tmpMatchesIds.filter(id => matchesIds.indexOf(id) === -1)
@@ -42,40 +73,62 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
         .then(r => r.body.participantIdentities)
         .catch(console.error);
 
+      if (!matchParticipants) {
+        console.log("bbb");
+        continue;
+      }
+
+      countRequests += 1;
+
       for (i = 0; i < matchParticipants.length; i++) {
         const player1 = matchParticipants[i].player;
 
-        if (accountIds.indexOf(player1.accountId) === -1) {
+        if (
+          accountIds.indexOf(player1.accountId) === -1 &&
+          whiteList.some(
+            v => v.toUpperCase() === player1.summonerName.toUpperCase()
+          )
+        ) {
+          console.log(`adding ${player1.summonerName}`);
           accountIds.push(player1.accountId);
         }
 
         for (j = i + 1; j < matchParticipants.length; j++) {
           const player2 = matchParticipants[j].player;
-          relationships.push({
-            "1": player1.summonerName,
-            "2": player2.summonerName
-          });
+          if (
+            !(
+              whiteList.some(
+                v => v.toUpperCase() === player1.summonerName.toUpperCase()
+              ) &&
+              whiteList.some(
+                v => v.toUpperCase() === player2.summonerName.toUpperCase()
+              )
+            )
+          )
+            continue;
+
+          fs.appendFile(
+            `./${name}.csv`,
+            `${player1.summonerName},${player2.summonerName}\n`,
+            err => {
+              if (err) {
+                console.log(err);
+              }
+              console.log(
+                `new rs between ${player1.summonerName} && ${
+                  player2.summonerName
+                }`
+              );
+            }
+          );
         }
       }
     }
   }
-
-  fs.writeFile(
-    `./${name}.csv`,
-    relationships.map(t => `${t["1"]},${t["2"]}`).join("\n"),
-    err => {
-      if (err) {
-        console.log(err);
-      }
-      console.log("Finished report.");
-    }
-  );
-
-  return relationships;
 };
 
 const name = process.env["LOL_NAME"];
 const initialAccountId = process.env["LOL_ACCOUNT_ID"];
 const apiKey = process.env["LOL_API_KEY"];
-main(initialAccountId, apiKey, 5, 50);
+main(initialAccountId, apiKey, 20, 500);
 module.exports = main;
