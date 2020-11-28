@@ -38,9 +38,9 @@ const main = async (name, accountId, apiKey) => {
   );
 };
 
-const name = process.env["LOL_NAME"];
-const accountId = process.env["LOL_ACCOUNT_ID"];
 const apiKey = process.env["LOL_API_KEY"];
-main(name, accountId, apiKey);
+const outputFileName = process.argv[2];
+const summonerName = process.argv[3];
+main(outputFileName, summonerName, apiKey);
 
 module.exports = main;
