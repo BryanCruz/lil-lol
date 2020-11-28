@@ -12,20 +12,24 @@ const main = async (name, accountId, apiKey) => {
   } catch {
     allMatches = await loadMatches(accountId, apiKey);
 
-    fs.writeFile(`./matches.${name}.json`, JSON.stringify(allMatches), err => {
-      if (err) {
-        console.log(err);
+    fs.writeFile(
+      `./matches.${name}.json`,
+      JSON.stringify(allMatches),
+      (err) => {
+        if (err) {
+          console.log(err);
+        }
+        console.log("Finished matches.");
       }
-      console.log("Finished matches.");
-    });
+    );
   }
 
   report = reportChamps(allMatches);
 
   fs.writeFile(
     `./${name}.txt`,
-    report.map(t => `${t.champion}: ${t.length}`).join("\n"),
-    err => {
+    report.map((t) => `${t.champion}: ${t.length}`).join("\n"),
+    (err) => {
       if (err) {
         console.log(err);
       }
