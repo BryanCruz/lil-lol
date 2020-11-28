@@ -2,24 +2,28 @@ const superagent = require("superagent");
 const fs = require("fs");
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
+const main = async (
+  initialAccountName,
+  apiKey,
+  matchesByPlayer,
+  maxMatches
+) => {
   const baseUrl = "https://br1.api.riotgames.com/lol/match/v4";
+  const initialAccountId = await getAccountId(initialAccountName, apiKey);
 
-  const whiteList = [
+  const allowlist = [
     "Y SOY REBELDE",
-    "CARIIN VOLTA PF",
+    "Mixuruquinha",
     "DIHADES",
     "EVANILLYN",
     "Bellini",
-    "MENGOGIRL",
-    "FASTFANG",
-    "UNICÓRNIO ROSA",
-    "UMA BUFA",
-    "Nome de Jogador",
-    "vrax"
+    "FLAnelista",
+    "Melodies of Funk",
+    "Meu nome é JuIIa",
+    "vrax",
   ];
 
   let matchesIds = [];
@@ -47,7 +51,7 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
       .get(
         `${baseUrl}/matchlists/by-account/${currAccountId}?beginIndex=0&endIndex=${matchesByPlayer}&api_key=${apiKey}`
       )
-      .then(r => r.body.matches.map(m => m.gameId))
+      .then((r) => r.body.matches.map((m) => m.gameId))
       .catch(console.error);
 
     if (!tmpMatchesIds) {
@@ -58,7 +62,7 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
     countRequests += 1;
 
     matchesIds = matchesIds.concat(
-      tmpMatchesIds.filter(id => matchesIds.indexOf(id) === -1)
+      tmpMatchesIds.filter((id) => matchesIds.indexOf(id) === -1)
     );
 
     while (
@@ -70,7 +74,7 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
 
       const matchParticipants = await superagent
         .get(`${baseUrl}/matches/${matchId}?api_key=${apiKey}`)
-        .then(r => r.body.participantIdentities)
+        .then((r) => r.body.participantIdentities)
         .catch(console.error);
 
       if (!matchParticipants) {
@@ -85,8 +89,8 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
 
         if (
           accountIds.indexOf(player1.accountId) === -1 &&
-          whiteList.some(
-            v => v.toUpperCase() === player1.summonerName.toUpperCase()
+          allowlist.some(
+            (v) => v.toUpperCase() === player1.summonerName.toUpperCase()
           )
         ) {
           console.log(`adding ${player1.summonerName}`);
@@ -97,11 +101,11 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
           const player2 = matchParticipants[j].player;
           if (
             !(
-              whiteList.some(
-                v => v.toUpperCase() === player1.summonerName.toUpperCase()
+              allowlist.some(
+                (v) => v.toUpperCase() === player1.summonerName.toUpperCase()
               ) &&
-              whiteList.some(
-                v => v.toUpperCase() === player2.summonerName.toUpperCase()
+              allowlist.some(
+                (v) => v.toUpperCase() === player2.summonerName.toUpperCase()
               )
             )
           )
@@ -110,14 +114,12 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
           fs.appendFile(
             `./${name}.csv`,
             `${player1.summonerName},${player2.summonerName}\n`,
-            err => {
+            (err) => {
               if (err) {
                 console.log(err);
               }
               console.log(
-                `new rs between ${player1.summonerName} && ${
-                  player2.summonerName
-                }`
+                `new rs between ${player1.summonerName} && ${player2.summonerName}`
               );
             }
           );
@@ -127,8 +129,19 @@ const main = async (initialAccountId, apiKey, matchesByPlayer, maxMatches) => {
   }
 };
 
-const name = process.env["LOL_NAME"];
-const initialAccountId = process.env["LOL_ACCOUNT_ID"];
+const getAccountId = async (summonerName, apiKey) => {
+  const baseUrl = "https://br1.api.riotgames.com/lol/summoner/v4";
+
+  const { accountId } = await superagent
+    .get(`${baseUrl}/summoners/by-name/${summonerName}?api_key=${apiKey}`)
+    .then((r) => r.body)
+    .catch((err) => console.error(err));
+
+  return accountId;
+};
+
+const name = process.argv[2];
+const summonerName = process.argv[3];
 const apiKey = process.env["LOL_API_KEY"];
-main(initialAccountId, apiKey, 20, 500);
+main(summonerName, apiKey, 20, 500);
 module.exports = main;
