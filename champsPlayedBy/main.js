@@ -2,7 +2,7 @@ const fs = require("fs");
 const loadMatches = require("./match.js");
 const reportChamps = require("./champs.js");
 
-const main = async (name, accountId, apiKey) => {
+const main = async (name, summonerName, apiKey) => {
   const matchesFileName = `./matches.${name}.json`;
 
   let allMatches;
@@ -10,7 +10,7 @@ const main = async (name, accountId, apiKey) => {
   try {
     allMatches = require(matchesFileName);
   } catch {
-    allMatches = await loadMatches(accountId, apiKey);
+    allMatches = await loadMatches(summonerName, apiKey);
 
     fs.writeFile(
       `./matches.${name}.json`,
