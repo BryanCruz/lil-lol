@@ -1,6 +1,6 @@
 const superagent = require("superagent");
 
-const baseUrl = "https://br1.api.riotgames.com/lol/match/v4";
+const baseUrl = "https://br1.api.riotgames.com";
 
 const main = async (accountId, apiKey) => {
   let allMatches = [];
@@ -10,7 +10,7 @@ const main = async (accountId, apiKey) => {
   do {
     tmpMatches = await superagent
       .get(
-        `${baseUrl}/matchlists/by-account/${accountId}?beginIndex=${i}&api_key=${apiKey}`
+        `${baseUrl}/lol/match/v4/matchlists/by-account/${accountId}?beginIndex=${i}&api_key=${apiKey}`
       )
       .then((r) => r.body.matches)
       .catch(console.error);
